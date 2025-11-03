@@ -21,16 +21,30 @@ export default function LoginForm() {
     if (email === 'demo@saulefacturation.fr' && password === 'demo123') {
       setLoading(false);
       setDemoMode(true);
-      // Simuler une session utilisateur
       localStorage.setItem('demoSession', 'true');
       window.location.reload();
       return;
     }
+
+    // Validation pour l'inscription
+    if (isSignUp && (!email || !password || !fullName || !companyName)) {
+      setError('Veuillez remplir tous les champs');
+      setLoading(false);
+      return;
+    }
+
+    if (isSignUp && password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { supabase } = await import('../lib/supabase');
-      
+
       if (isSignUp) {
-        // Inscription
+        // Inscription avec Supabase
+        // La company et le profile sont créés automatiquement par un trigger SQL
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -45,31 +59,20 @@ export default function LoginForm() {
         if (signUpError) throw signUpError;
 
         if (data.user) {
-          // Créer la compagnie
-          const { data: companyData, error: companyError } = await supabase
-            .from('companies')
-            .insert({ name: companyName })
-            .select()
-            .single();
-
-          if (companyError) throw companyError;
-
-          // Créer le profil utilisateur
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              company_id: companyData.id,
-              full_name: fullName
-            });
-
-          if (profileError) throw profileError;
-
-          alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+          // Vérifier si l'email doit être confirmé
+          if (data.user.identities && data.user.identities.length === 0) {
+            alert('Compte créé avec succès ! Un email de confirmation vous a été envoyé. Veuillez vérifier votre boîte mail et cliquer sur le lien de confirmation pour activer votre compte.');
+          } else {
+            alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+          }
           setIsSignUp(false);
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          setCompanyName('');
         }
       } else {
-        // Connexion
+        // Connexion avec Supabase
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -79,9 +82,13 @@ export default function LoginForm() {
       }
     } catch (error: any) {
       console.error('Auth error:', error);
-      // Si c'est une erreur de réseau/fetch, proposer le mode démo
+
       if (error.message?.includes('Failed to fetch') || error.message?.includes('fetch')) {
-        setError('Connexion à Supabase impossible. Utilisez le mode démonstration avec : demo@saulefacturation.fr / demo123');
+        setError('Connexion à la base de données impossible. Vérifiez votre connexion internet ou utilisez le mode démo : demo@saulefacturation.fr / demo123');
+      } else if (error.message?.includes('already registered')) {
+        setError('Un compte avec cet email existe déjà');
+      } else if (error.message?.includes('Invalid login credentials')) {
+        setError('Email ou mot de passe incorrect');
       } else {
         setError(error.message || 'Une erreur est survenue');
       }
@@ -97,7 +104,7 @@ export default function LoginForm() {
           <div className="flex items-center justify-center mb-4">
             <Building className="h-12 w-12 text-blue-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Saule Facturation</h2>
+          <h2 className="text-3xl font-bold text-gray-900">Saule Facturationn</h2>
           <p className="mt-2 text-gray-600">
             {isSignUp ? 'Créer votre compte' : 'Connectez-vous à votre compte'}
           </p>
