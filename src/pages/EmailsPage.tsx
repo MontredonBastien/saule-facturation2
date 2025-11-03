@@ -79,10 +79,18 @@ export default function EmailsPage() {
       const userId = await getUserId();
       if (!userId) return;
 
+      const { data: companyIdData, error: companyError } = await supabase
+        .rpc('get_user_company_id');
+
+      if (companyError || !companyIdData) {
+        console.error('Error getting company_id:', companyError);
+        return;
+      }
+
       const { data: sharesData, error: sharesError } = await supabase
         .from('document_shares')
         .select('*')
-        .eq('user_id', userId)
+        .eq('company_id', companyIdData)
         .order('sent_at', { ascending: false });
 
       if (sharesError) throw sharesError;
@@ -183,7 +191,17 @@ export default function EmailsPage() {
         r.role ? `${r.name} (${r.role}) - ${r.email}` : `${r.name} - ${r.email}`
       ).join('; ');
 
+      const { data: companyIdData, error: companyError } = await supabase
+        .rpc('get_user_company_id');
+
+      if (companyError || !companyIdData) {
+        alert('Erreur: impossible de récupérer les informations de l\'entreprise');
+        console.error('Company ID error:', companyError);
+        return;
+      }
+
       const shareData = {
+        company_id: companyIdData,
         user_id: userId,
         document_type: formData.documentType,
         document_id: formData.documentId,
@@ -266,7 +284,6 @@ export default function EmailsPage() {
           ok: response.ok,
           result: result
         });
-
         if (!response.ok || !result.success) {
           console.error('❌ Erreur de l\'Edge Function:', result);
 
@@ -334,7 +351,6 @@ export default function EmailsPage() {
           documentNumber: documentNumber,
         });
       }
-
 
       const recipientsList = formData.recipients.map(r => `- ${r.name} (${r.email})${r.role ? ` - ${r.role}` : ''}`).join('\n');
 
@@ -504,7 +520,6 @@ export default function EmailsPage() {
           Envoyer un document
         </button>
       </div>
-
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -863,36 +878,4 @@ export default function EmailsPage() {
               />
             </div>
 
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setFormData({
-                    documentType: 'quote',
-                    documentId: '',
-                    recipients: [],
-                    subject: '',
-                    message: '',
-                  });
-                  setSelectedClient(null);
-                  setClientSearch('');
-                  setDocumentSearch('');
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Envoyer
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
-    </div>
-  );
-}
+            <div className="flex justify-en
