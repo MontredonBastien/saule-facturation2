@@ -179,7 +179,6 @@ export default function EmailsPage() {
 
       const shareToken = generateToken();
 
-      // Utiliser l'URL publique configurée ou l'URL actuelle
       const publicUrl = import.meta.env.VITE_PUBLIC_URL;
       const baseUrl = publicUrl && publicUrl.trim() !== '' ? publicUrl : window.location.origin;
       const shareLink = `${baseUrl}/share/${shareToken}`;
@@ -244,7 +243,6 @@ export default function EmailsPage() {
         }
       }
 
-      // Envoi d'email avec Resend
       let emailResult: any = {
         success: false,
         sent: 0,
@@ -252,7 +250,6 @@ export default function EmailsPage() {
         isDemoMode: false
       };
 
-      // Utiliser l'Edge Function Supabase pour envoyer les emails
       try {
         console.log('📤 Envoi via Edge Function Supabase...');
 
@@ -284,14 +281,13 @@ export default function EmailsPage() {
           ok: response.ok,
           result: result
         });
+
         if (!response.ok || !result.success) {
           console.error('❌ Erreur de l\'Edge Function:', result);
 
-          // Afficher les détails de l'erreur si disponibles
           if (result.errors && result.errors.length > 0) {
             console.error('📋 Détails des erreurs:', result.errors);
 
-            // Afficher chaque erreur avec son détail complet
             result.errors.forEach((err: any, index: number) => {
               console.error(`🔴 Erreur ${index + 1}:`, {
                 recipient: err.recipient,
@@ -299,7 +295,6 @@ export default function EmailsPage() {
               });
             });
 
-            // Vérifier si c'est une erreur de clé API manquante
             const firstError = result.errors[0];
             const errorMessage = firstError?.error || '';
 
@@ -314,7 +309,6 @@ export default function EmailsPage() {
                     '3. Ajoutez: RESEND_API_KEY = re_Y7Shm5cE_Axf5ZEMfzfB94ZjedhkyRiJ7\n\n' +
                     'En attendant, l\'email sera simulé en mode démo.');
             } else {
-              // Autre type d'erreur (ex: problème avec Resend API)
               alert(`❌ Erreur d'envoi d'email:\n\n${errorMessage}\n\nL'email sera simulé en mode démo.`);
             }
           }
@@ -334,7 +328,6 @@ export default function EmailsPage() {
       } catch (error: any) {
         console.error('❌ Erreur lors de l\'appel à l\'Edge Function:', error);
 
-        // Fallback en mode démo si l'Edge Function échoue
         emailResult = {
           success: true,
           sent: formData.recipients.length,
@@ -520,6 +513,7 @@ export default function EmailsPage() {
           Envoyer un document
         </button>
       </div>
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -853,32 +847,6 @@ export default function EmailsPage() {
                   </div>
                 </div>
               )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Sujet</label>
-              <input
-                type="text"
-                value={formData.subject}
-                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Ex: Votre devis pour..."
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Message</label>
-              <textarea
-                value={formData.message}
-                onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-                rows={4}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Votre message personnalisé..."
-              />
-            </div>
-
-            <div className="flex justify-en
             </div>
 
             <div>
