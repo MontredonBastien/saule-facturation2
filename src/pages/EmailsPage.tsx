@@ -42,7 +42,7 @@ interface EmailFormData {
 }
 
 export default function EmailsPage() {
-  const { quotes, invoices, credits, clients, updateQuote, updateInvoice, updateCredit } = useApp();
+  const { quotes, invoices, credits, clients, updateQuote, updateInvoice, updateCredit, userCompanyId } = useApp();
   const [shares, setShares] = useState<DocumentShare[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -75,23 +75,21 @@ export default function EmailsPage() {
   };
 
   const loadData = async () => {
-    try {
+        try {
       const userId = await getUserId();
       if (!userId) return;
 
-      const { data: companyIdData, error: companyError } = await supabase
-        .rpc('get_user_company_id');
-
-      if (companyError || !companyIdData) {
-        console.error('Error getting company_id:', companyError);
+      if (!userCompanyId) {
+        console.error('User has no company_id');
         return;
       }
 
       const { data: sharesData, error: sharesError } = await supabase
         .from('document_shares')
         .select('*')
-        .eq('company_id', companyIdData)
+        .eq('company_id', userCompanyId)
         .order('sent_at', { ascending: false });
+
 
       if (sharesError) throw sharesError;
 
@@ -193,14 +191,14 @@ export default function EmailsPage() {
       const { data: companyIdData, error: companyError } = await supabase
         .rpc('get_user_company_id');
 
-      if (companyError || !companyIdData) {
+           if (!userCompanyId) {
         alert('Erreur: impossible de récupérer les informations de l\'entreprise');
-        console.error('Company ID error:', companyError);
+        console.error('User has no company ID');
         return;
       }
 
       const shareData = {
-        company_id: companyIdData,
+        company_id: userCompanyId,
         user_id: userId,
         document_type: formData.documentType,
         document_id: formData.documentId,
