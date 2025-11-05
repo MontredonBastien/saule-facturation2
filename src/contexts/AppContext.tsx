@@ -17,6 +17,7 @@ interface AppContextType {
   loading: boolean;
   error: string | null;
   isAutoSyncRunning: boolean;
+  userCompanyId: string | null;
 
   // Core actions
   loadData: () => Promise<void>;
@@ -96,6 +97,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loading: appData.loading,
     error: appData.error,
     isAutoSyncRunning: autoSync.isRunning,
+    userCompanyId: appData.userCompanyId, 
 
     // Core actions
     loadData: appData.loadData,
