@@ -227,19 +227,19 @@ export default function EmailsPage() {
         const quote = quotes.find(q => q.id === formData.documentId);
         if (quote) {
           documentNumber = quote.number || 'Brouillon';
-          await updateQuote({ ...quote, status: 'sent' });
+          await updateQuote(quote.id, { status: 'sent' });
         }
       } else if (formData.documentType === 'invoice') {
         const invoice = invoices.find(i => i.id === formData.documentId);
         if (invoice) {
           documentNumber = invoice.number || 'Brouillon';
-          await updateInvoice({ ...invoice, status: 'sent' });
+          await updateInvoice(quote.id, { status: 'sent' });
         }
       } else if (formData.documentType === 'credit') {
         const credit = credits.find(c => c.id === formData.documentId);
         if (credit) {
           documentNumber = credit.number || 'Brouillon';
-          await updateCredit({ ...credit, status: 'sent' });
+          await updateCredit(quote.id, { status: 'sent' });
         }
       }
 
