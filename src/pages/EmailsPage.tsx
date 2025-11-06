@@ -74,12 +74,35 @@ export default function EmailsPage() {
     return user?.id || null;
   };
 
+  const getCompanyId = async (): Promise<string | null> => {
+    if (userCompanyId) {
+      return userCompanyId;
+    }
+
+    const demoSession = localStorage.getItem('demoSession');
+    if (demoSession === 'true') {
+      return '00000000-0000-0000-0000-000000000001';
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    return profile?.company_id || null;
+  };
+
   const loadData = async () => {
     try {
       const userId = await getUserId();
       if (!userId) return;
 
-      if (!userCompanyId) {
+      const companyId = await getCompanyId();
+      if (!companyId) {
         console.error('User has no company_id');
         return;
       }
@@ -87,7 +110,7 @@ export default function EmailsPage() {
       const { data: sharesData, error: sharesError } = await supabase
         .from('document_shares')
         .select('*')
-        .eq('company_id', userCompanyId)
+        .eq('company_id', companyId)
         .order('sent_at', { ascending: false });
 
       if (sharesError) throw sharesError;
@@ -187,14 +210,15 @@ export default function EmailsPage() {
         r.role ? `${r.name} (${r.role}) - ${r.email}` : `${r.name} - ${r.email}`
       ).join('; ');
 
-      if (!userCompanyId) {
-        alert('Erreur: impossible de récupérer les informations de l\'entreprise');
+      const companyId = await getCompanyId();
+      if (!companyId) {
+        alert('Erreur: impossible de récupérer les informations de l\'entreprise.\n\nVeuillez vous assurer d\'être connecté.');
         console.error('User has no company ID');
         return;
       }
 
       const shareData = {
-        company_id: userCompanyId,
+        company_id: companyId,
         user_id: userId,
         document_type: formData.documentType,
         document_id: formData.documentId,
@@ -298,9 +322,9 @@ export default function EmailsPage() {
               alert('⚠️ Configuration requise:\n\n' +
                     'Le secret RESEND_API_KEY n\'est pas configuré dans Supabase.\n\n' +
                     'Pour activer l\'envoi d\'emails:\n' +
-                    '1. Allez sur votre dashboard Supabase\n' +
+                    '1. Allez sur: https://supabase.com/dashboard/project/YOUR_PROJECT_ID\n' +
                     '2. Menu "Edge Functions" → "Secrets"\n' +
-                    '3. Ajoutez: RESEND_API_KEY = votre_clé\n\n' +
+                    '3. Ajoutez: RESEND_API_KEY = votre_clé_resend\n\n' +
                     'En attendant, l\'email sera simulé en mode démo.');
             } else {
               alert(`❌ Erreur d'envoi d'email:\n\n${errorMessage}\n\nL'email sera simulé en mode démo.`);
@@ -347,7 +371,7 @@ export default function EmailsPage() {
         : '';
 
       const modeInfo = emailResult.isDemoMode
-        ? '\n\n💡 Mode démo: Les emails ne sont pas réellement envoyés.\n📝 Configurez RESEND_API_KEY dans Supabase Edge Functions pour activer l\'envoi réel.'
+        ? '\n\n💡 Mode démo: Les emails ne sont pas réellement envoyés.\n📝 Configurez RESEND_API_KEY pour activer l\'envoi réel.'
         : '\n\n✉️ Les emails ont été envoyés avec succès!';
 
       const shouldPreview = confirm(`✅ Document partagé avec succès!\n\n📧 ${emailResult.sent} email(s) ${emailResult.isDemoMode ? 'simulé(s)' : 'envoyé(s)'}\n\n👥 Destinataires:\n${recipientsList}\n\n🔗 Lien: ${shareLink}${modeInfo}${linkWarning}\n\nVoulez-vous prévisualiser le document partagé ?`);
@@ -674,7 +698,12 @@ export default function EmailsPage() {
                 value={formData.documentId}
                 onChange={(e) => {
                   const selectedId = e.target.value;
-                  setFormData(prev => ({ ...prev, documentId: selectedId }));
+                  console.log('Document sélectionné:', selectedId);
+                  setFormData(prev => {
+                    const newData = { ...prev, documentId: selectedId };
+                    console.log('Nouveau formData:', newData);
+                    return newData;
+                  });
                   const doc = getDocumentOptions().find((d: any) => d.id === selectedId);
                   if (doc) {
                     const client = clients.find(c => c.id === doc.clientId);
