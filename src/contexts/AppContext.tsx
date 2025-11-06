@@ -16,7 +16,6 @@ interface AppContextType {
   settings: Settings;
   loading: boolean;
   error: string | null;
-  interface AppContextType {
   isAutoSyncRunning: boolean;
   userCompanyId: string | null;
 
@@ -35,7 +34,6 @@ interface AppContextType {
   updateInvoice: (id: string, data: Partial<Invoice>) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
   validateInvoice: (id: string) => Promise<void>;
-  userCompanyId: string | null;
 
   addCredit: (credit: Omit<Credit, 'id'>) => Promise<Credit>;
   updateCredit: (id: string, data: Partial<Credit>) => Promise<void>;
@@ -97,10 +95,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     auditLogs: appData.auditLogs,
     settings: appData.settings,
     loading: appData.loading,
-    const value: AppContextType = {
     error: appData.error,
     isAutoSyncRunning: autoSync.isRunning,
-    userCompanyId: appData.userCompanyId, 
+    userCompanyId: appData.userCompanyId,
 
     // Core actions
     loadData: appData.loadData,
@@ -140,7 +137,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateClient: (id: string, data: Partial<Client>) => {
       const client = appData.clients.find(c => c.id === id);
       return appData.saveClient(client ? { ...client, ...data } : { id, ...data });
-      userCompanyId: appData.userCompanyId,
     },
     deleteClient: appData.deleteClient,
 
@@ -167,6 +163,9 @@ export function useApp() {
   if (!context) {
     throw new Error('useApp must be used within AppProvider');
   }
+  return context;
+}
+
   return context;
   
 }
