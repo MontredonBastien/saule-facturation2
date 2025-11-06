@@ -75,7 +75,7 @@ export default function EmailsPage() {
   };
 
   const loadData = async () => {
-        try {
+    try {
       const userId = await getUserId();
       if (!userId) return;
 
@@ -89,7 +89,6 @@ export default function EmailsPage() {
         .select('*')
         .eq('company_id', userCompanyId)
         .order('sent_at', { ascending: false });
-
 
       if (sharesError) throw sharesError;
 
@@ -188,10 +187,7 @@ export default function EmailsPage() {
         r.role ? `${r.name} (${r.role}) - ${r.email}` : `${r.name} - ${r.email}`
       ).join('; ');
 
-      const { data: companyIdData, error: companyError } = await supabase
-        .rpc('get_user_company_id');
-
-           if (!userCompanyId) {
+      if (!userCompanyId) {
         alert('Erreur: impossible de récupérer les informations de l\'entreprise');
         console.error('User has no company ID');
         return;
@@ -231,13 +227,13 @@ export default function EmailsPage() {
         const invoice = invoices.find(i => i.id === formData.documentId);
         if (invoice) {
           documentNumber = invoice.number || 'Brouillon';
-          await updateInvoice(quote.id, { status: 'sent' });
+          await updateInvoice(invoice.id, { status: 'sent' });
         }
       } else if (formData.documentType === 'credit') {
         const credit = credits.find(c => c.id === formData.documentId);
         if (credit) {
           documentNumber = credit.number || 'Brouillon';
-          await updateCredit(quote.id, { status: 'sent' });
+          await updateCredit(credit.id, { status: 'sent' });
         }
       }
 
@@ -302,9 +298,9 @@ export default function EmailsPage() {
               alert('⚠️ Configuration requise:\n\n' +
                     'Le secret RESEND_API_KEY n\'est pas configuré dans Supabase.\n\n' +
                     'Pour activer l\'envoi d\'emails:\n' +
-                    '1. Allez sur: https://supabase.com/dashboard/project/0ec90b57d6e95fcbda19832f\n' +
+                    '1. Allez sur votre dashboard Supabase\n' +
                     '2. Menu "Edge Functions" → "Secrets"\n' +
-                    '3. Ajoutez: RESEND_API_KEY = re_Y7Shm5cE_Axf5ZEMfzfB94ZjedhkyRiJ7\n\n' +
+                    '3. Ajoutez: RESEND_API_KEY = votre_clé\n\n' +
                     'En attendant, l\'email sera simulé en mode démo.');
             } else {
               alert(`❌ Erreur d'envoi d'email:\n\n${errorMessage}\n\nL'email sera simulé en mode démo.`);
@@ -351,7 +347,7 @@ export default function EmailsPage() {
         : '';
 
       const modeInfo = emailResult.isDemoMode
-        ? '\n\n💡 Mode démo: Les emails ne sont pas réellement envoyés.\n📝 Configurez VITE_RESEND_API_KEY pour activer l\'envoi réel.'
+        ? '\n\n💡 Mode démo: Les emails ne sont pas réellement envoyés.\n📝 Configurez RESEND_API_KEY dans Supabase Edge Functions pour activer l\'envoi réel.'
         : '\n\n✉️ Les emails ont été envoyés avec succès!';
 
       const shouldPreview = confirm(`✅ Document partagé avec succès!\n\n📧 ${emailResult.sent} email(s) ${emailResult.isDemoMode ? 'simulé(s)' : 'envoyé(s)'}\n\n👥 Destinataires:\n${recipientsList}\n\n🔗 Lien: ${shareLink}${modeInfo}${linkWarning}\n\nVoulez-vous prévisualiser le document partagé ?`);
@@ -678,12 +674,7 @@ export default function EmailsPage() {
                 value={formData.documentId}
                 onChange={(e) => {
                   const selectedId = e.target.value;
-                  console.log('Document sélectionné:', selectedId);
-                  setFormData(prev => {
-                    const newData = { ...prev, documentId: selectedId };
-                    console.log('Nouveau formData:', newData);
-                    return newData;
-                  });
+                  setFormData(prev => ({ ...prev, documentId: selectedId }));
                   const doc = getDocumentOptions().find((d: any) => d.id === selectedId);
                   if (doc) {
                     const client = clients.find(c => c.id === doc.clientId);
