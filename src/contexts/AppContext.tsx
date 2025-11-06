@@ -34,7 +34,7 @@ interface AppContextType {
   updateInvoice: (id: string, data: Partial<Invoice>) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
   validateInvoice: (id: string) => Promise<void>;
-
+  
   addCredit: (credit: Omit<Credit, 'id'>) => Promise<Credit>;
   updateCredit: (id: string, data: Partial<Credit>) => Promise<void>;
   deleteCredit: (id: string) => Promise<void>;
@@ -108,23 +108,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addQuote: appData.saveQuote,
     updateQuote: (id: string, data: Partial<Quote>) => {
       const quote = appData.quotes.find(q => q.id === id);
-      return appData.saveQuote(quote ? { ...quote, ...data } : { id, ...data });
+      if (!quote) {
+        console.error('Quote not found:', id);
+        return Promise.resolve();
+      }
+      return appData.saveQuote({ ...quote, ...data });
     },
     deleteQuote: appData.deleteQuote,
     validateQuote: appData.validateQuote,
-    
+
     addInvoice: appData.saveInvoice,
     updateInvoice: (id: string, data: Partial<Invoice>) => {
       const invoice = appData.invoices.find(i => i.id === id);
-      return appData.saveInvoice(invoice ? { ...invoice, ...data } : { id, ...data });
+      if (!invoice) {
+        console.error('Invoice not found:', id);
+        return Promise.resolve();
+      }
+      return appData.saveInvoice({ ...invoice, ...data });
     },
     deleteInvoice: appData.deleteInvoice,
     validateInvoice: appData.validateInvoice,
-    
+
     addCredit: appData.saveCredit,
     updateCredit: (id: string, data: Partial<Credit>) => {
       const credit = appData.credits.find(c => c.id === id);
-      return appData.saveCredit(credit ? { ...credit, ...data } : { id, ...data });
+      if (!credit) {
+        console.error('Credit not found:', id);
+        return Promise.resolve();
+      }
+      return appData.saveCredit({ ...credit, ...data });
     },
     deleteCredit: appData.deleteCredit,
     validateCredit: appData.validateCredit,
@@ -164,8 +176,4 @@ export function useApp() {
     throw new Error('useApp must be used within AppProvider');
   }
   return context;
-}
-
-  return context;
-  
 }
